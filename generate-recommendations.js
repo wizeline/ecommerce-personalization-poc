@@ -1,36 +1,53 @@
-const { OpenAIAPI } = require('openai');
-const { leerDatosProductos } = require('./leerDatosProductos');
+import OpenAIAPI from "openai";
+import { generatePrompt } from "./generate-prompt.js";
+import {
+  readProductInfo,
+  readUserHistoryPurchaseInfo,
+  readUserInfo,
+} from "./read-database-info.js";
+import dotenv from "dotenv";
+dotenv.config();
 
-// Configurar la API de OpenAI
 const openai = new OpenAIAPI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.API_KEY,
 });
 
-exports.leerDatosSQLite = leerDatosSQLite;
+async function sendAPIPrompt() {
+  try {
+    const promptData = await Promise.all([
+      readProductInfo(),
+      readUserHistoryPurchaseInfo(),
+      readUserInfo(),
+    ]).then(([productsInfo, usersHistoryPurchaseInfo, userInfo]) => {
+      return {
+        productsInfo,
+        usersHistoryPurchaseInfo,
+        userInfo,
+      };
 
-// Función para enviar datos a la API de OpenAI
-async function enviarPromptConDatos(datos) {
-    try {
-        const response = await openai.createChatCompletion({
-            model: "gpt-4.0-turbo", // Asegúrate de utilizar el modelo correcto
-            messages: [
-                {
-                    role: "system",
-                    content: "Tu mensaje de sistema va aquí"
-                },
-                {
-                    role: "user",
-                    content: `Aquí están los datos: ${datos}`
-                }
-            ]
-        });
-    } catch (error) {
-        console.error('Error al enviar la solicitud:', error);
-    }
+      // const prompt = generatePrompt(promptData);
+
+      // console.log(prompt);
+    });
+    const prompt = generatePrompt(promptData);
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo-1106",
+      messages: [
+        // {
+        //   role: "system",
+        //   content: "Tu mensaje de sistema va aquí",
+        // },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+    console.log(response);
+  } catch (error) {
+    console.error("Error al enviar la solicitud:", error);
+  }
 }
 
-
-
-enviarPromptConDatos(leerDatosProductos)
-
-
+sendAPIPrompt();
