@@ -1,11 +1,10 @@
-const sqlite3 = require('sqlite3').verbose();
+import sqlite3 from 'sqlite3';
+sqlite3.verbose();
 
+import { DB_PATH, PRODUCT_QUERY, USER_HISTORY_PURCHASE_QUERY, USER_QUERY } from './constants.js';
 
-const DB_PATH = './retailDB.sqlite';
-
-// Función para leer datos de una base de datos SQLite
-function leerDatosSQLite(dbPath, query, callback) {
-    let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
+function readSQLiteData(dbPath, query, callback) {
+    const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
         if (err) {
             console.error(err.message);
             return;
@@ -22,17 +21,19 @@ function leerDatosSQLite(dbPath, query, callback) {
     });
 }
 
-const QUERY_DE_PRODUCTOS = 'SELECT product_id as id, product_name as name, description FROM info limit 1'; 
-
-function leerDatosProductos() {
-    // Ejemplo de uso
-
-    return new Promise((done) => {
-        leerDatosSQLite(DB_PATH, QUERY_DE_PRODUCTOS, (datos) => {
-            // Convertir los datos a un formato de texto
-            return done(JSON.stringify(datos));
+function readData(query) {
+    return new Promise((resolve, reject) => {
+        readSQLiteData(DB_PATH, query, (datos) => {
+            try {
+                resolve(datos);
+                // resolve(JSON.stringify(datos));
+            } catch (err) {
+                reject(err);
+            }
         });
     })
 }
 
-exports.leerDatosProductos = leerDatosProductos;
+export const readProductInfo = () => readData(PRODUCT_QUERY);
+export const readUserHistoryPurchaseInfo = () => readData(USER_HISTORY_PURCHASE_QUERY);
+export const readUserInfo = () => readData(USER_QUERY);
