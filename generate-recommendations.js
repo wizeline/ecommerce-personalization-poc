@@ -24,8 +24,6 @@ async function enviarPromptConDatos(datos) {
                 }
             ]
         });
-
-        console.log('Respuesta:', response.data);
     } catch (error) {
         console.error('Error al enviar la solicitud:', error);
     }

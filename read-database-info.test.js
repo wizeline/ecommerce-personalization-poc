@@ -1,4 +1,4 @@
-import { readProductInfo, readUserHistoryPurchaseInfo, readUserInfo } from "./leerDatosProductos.js";
+import { readProductInfo, readUserHistoryPurchaseInfo, readUserInfo } from "./read-database-info.js";
 
 describe("readData", () => {
 

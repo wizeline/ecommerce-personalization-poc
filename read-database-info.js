@@ -9,7 +9,6 @@ function readSQLiteData(dbPath, query, callback) {
             console.error(err.message);
             return;
         }
-        console.log('Conectado a la base de datos SQLite.');
     });
 
     db.all(query, [], (err, rows) => {
