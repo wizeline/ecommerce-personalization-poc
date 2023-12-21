@@ -7,10 +7,6 @@ export const generatePrompt = ({
   usersHistoryPurchaseInfo,
   userInfo,
 }) => {
-  console.log("USERINFO", userInfo);
-  // console.log("PRODUCTSINFO", productsInfo)
-  // console.log("PURCHASEINFO", usersHistoryPurchaseInfo)
-
   return PROMPT_TEMPLATE.replace("JSON_DE_PRODUCTOS", stringify(productsInfo))
     .replace(
       "JSON_DE_HISTORIAL_DE_COMPRAS",

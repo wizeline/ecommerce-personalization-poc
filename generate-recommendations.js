@@ -24,27 +24,19 @@ async function sendAPIPrompt() {
         usersHistoryPurchaseInfo,
         userInfo,
       };
-
-      // const prompt = generatePrompt(promptData);
-
-      // console.log(prompt);
     });
     const prompt = generatePrompt(promptData);
 
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo-1106",
       messages: [
-        // {
-        //   role: "system",
-        //   content: "Tu mensaje de sistema va aquí",
-        // },
         {
           role: "user",
           content: prompt,
         },
       ],
     });
-    console.log(response);
+    console.log(response.choices[0].message.content);
   } catch (error) {
     console.error("Error al enviar la solicitud:", error);
   }
