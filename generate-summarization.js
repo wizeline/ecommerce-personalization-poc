@@ -1,5 +1,5 @@
 import { LLMChain } from "langchain/chains";
-// import { OpenAI } from "@langchain/openai";
+import { OpenAI } from "@langchain/openai";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import {
   readProductInfo,
@@ -13,10 +13,10 @@ dotenv.config();
 
 async function summarizeDatabaseInfo() {
   try {
-    // const model = new OpenAI({
-    //   modelName: "gpt-3.5-turbo",
-    //   temperature: 0,
-    // });
+    const model = new OpenAI({
+      modelName: "gpt-3.5-turbo",
+      temperature: 0,
+    });
 
     const databaseInfo = await Promise.all([
       readProductInfo(),
@@ -43,10 +43,10 @@ async function summarizeDatabaseInfo() {
     });
 
     const chunks = textSplitter.create_documents([text]);
-    console.log(chunks.length);
+    console.log(chunks);
 
     const chain = LLMChain.load({
-      llm,
+      model,
       chainType: "map_reduce",
       verbose: false,
     });
