@@ -1,5 +1,6 @@
 import { LLMChain } from 'langchain/chains';
-import { OpenAI } from 'langchain/llms/openai';
+import { OpenAI } from '@langchain/openai';
+import { PromptTemplate } from 'langchain/prompts';
 
 import { generatePrompt } from "./generate-prompt.js";
 import {
@@ -9,10 +10,6 @@ import {
 } from "./read-database-info.js";
 import dotenv from "dotenv";
 dotenv.config();
-
-const openai = new OpenAI({
-  apiKey: process.env.API_KEY,
-});
 
 async function sendAPIPrompt() {
   try {
@@ -27,13 +24,12 @@ async function sendAPIPrompt() {
         userInfo,
       };
     });
-    const prompt = generatePrompt(promptData);
+    const template = generatePrompt(promptData);
+    const prompt = new PromptTemplate({ template: template.replace(/{/g, "{{").replace(/}/g, "}}"), inputVariables: [] });
 
-    model = new OpenAI({ modelName: "gpt-3.5-turbo-1106", temperature: 0 })
-    const template =
-      'Be very technical when responding. Respond what you know about company: {company}'
+    const model = new OpenAI({ modelName: "gpt-3.5-turbo-1106", temperature: 0 })
     const chain = new LLMChain({ llm: model, prompt })
-    const result = await chain.call({ company: companyName })
+    const result = await chain.call()
     console.log(result.text)
   } catch (error) {
     console.error("Error al enviar la solicitud:", error);
