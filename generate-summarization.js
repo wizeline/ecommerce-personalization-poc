@@ -1,61 +1,63 @@
-import { LLMChain } from "langchain/chains";
+import { LLMChain, StuffDocumentsChain, MapReduceDocumentsChain } from "langchain/chains";
+import { PromptTemplate } from "@langchain/core/prompts";
 import { OpenAI } from "@langchain/openai";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import {
-  readProductInfo,
-  readUserHistoryPurchaseInfo,
-  readUserInfo,
-} from "./read-database-info.js";
-import { encoding_for_model } from "tiktoken";
+import { Document } from "@langchain/core/documents";
+import { readProductInfo, } from "./read-database-info.js";
 
 import dotenv from "dotenv";
 dotenv.config();
 
-async function summarizeDatabaseInfo() {
+export const summarizeDatabaseInfo = async () => {
   try {
-    const model = new OpenAI({
+    const llm = new OpenAI({
       modelName: "gpt-3.5-turbo",
       temperature: 0,
     });
 
-    const databaseInfo = await Promise.all([
-      readProductInfo(),
-      readUserHistoryPurchaseInfo(),
-      readUserInfo(),
-    ]).then(([productsInfo, usersHistoryPurchaseInfo, userInfo]) => {
-      return {
-        productsInfo,
-        usersHistoryPurchaseInfo,
-        userInfo,
-      };
+    const compressPrompt = PromptTemplate.fromTemplate(`given a product with the following description, give me a list of 5 types of clients that could like it.
+    
+    --------------------
+    {context}
+    --------------------
+      
+    `);
+
+    const combinePrompt = PromptTemplate.fromTemplate(`Given the following clients descriptions, summarize all of them in only 5 client descriptions.
+    
+    --------------------
+    {mapped_types_of_users}
+    --------------------
+      
+    `);
+
+
+
+    const compressChain = new LLMChain({ prompt: compressPrompt, llm });
+    const combineLLMChain = new LLMChain({
+      prompt: combinePrompt,
+      llm
+    });
+    const combineDocumentChain = new StuffDocumentsChain({
+      llmChain: combineLLMChain,
+      documentVariableName: "mapped_types_of_users",
     });
 
-    const text = JSON.stringify(databaseInfo);
 
-    const enc = encoding_for_model("gpt-3.5-turbo");
-    const numTokens = enc.encode(text).length;
-    console.log(`Número de tokens: ${numTokens}`);
-    enc.free();
-
-    const textSplitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 5000,
-      chunkOverlap: 50,
+    const chain = new MapReduceDocumentsChain({
+      llmChain: compressChain,
+      combineDocumentChain,
+      returnIntermediateSteps: true,
+      verbose: true,
+      ensureMapStep: true
     });
 
-    const chunks = textSplitter.create_documents([text]);
-    console.log(chunks);
 
-    const chain = LLMChain.load({
-      model,
-      chainType: "map_reduce",
-      verbose: false,
-    });
-
-    const summary = await chain.run(chunks);
-    console.log(summary);
+    return readProductInfo().then((productsInfo) => {
+      const selectedProducts = productsInfo.slice(1, 3);
+      const documents = selectedProducts.map(({ id, description }) => new Document({ pageContent: description, metadata: { id } }))
+      return chain.invoke({ input_documents: documents })
+    })
   } catch (error) {
     console.error("Error al ejecutar la cadena:", error);
   }
 }
-
-summarizeDatabaseInfo();
