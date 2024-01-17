@@ -11,7 +11,7 @@ dotenv.config();
 export const summarizeDatabaseInfo = async () => {
   try {
     const llm = new OpenAI({
-      modelName: "gpt-4",
+      modelName: "gpt-3.5-turbo",
       temperature: 0,
       // fail at the first rate limit error
       maxRetries: 0,
@@ -35,30 +35,26 @@ export const summarizeDatabaseInfo = async () => {
       
     `);
 
-    const compressChain = new LLMChain({ prompt: compressPrompt, llm });
-    const combineLLMChain = new LLMChain({
-      prompt: combinePrompt,
-      llm
-    });
-    const combineDocumentChain = new StuffDocumentsChain({
-      llmChain: combineLLMChain,
-      documentVariableName: "mapped_types_of_users",
-    });
-
-
     const chain = new MapReduceDocumentsChain({
-      llmChain: compressChain,
-      combineDocumentChain,
+      llmChain: new LLMChain({ prompt: compressPrompt, llm }),
+      combineDocumentChain: new StuffDocumentsChain({
+        llmChain: new LLMChain({
+          prompt: combinePrompt,
+          llm
+        }),
+        documentVariableName: "mapped_types_of_users",
+      }),
       verbose: true,
+      // in the map step, we are transforming. Make sure is always applied, even
+      // in the selected descriptions fit in the reduce query
       ensureMapStep: true
     });
 
 
     return readProductInfo()
       .then((productsInfo) => chunkArray(productsInfo, 60))
-      .then((chunksOfProducts) => chunksOfProducts.map((chunk) => {
-        return new Document({ pageContent: chunk.map(({ description }) => `* ${description}\n\n)`) });
-      }))
+      // a document for each chunk of products, containing a list of descriptions of the products in the chunk
+      .then((chunksOfProducts) => chunksOfProducts.map((chunk) => new Document({ pageContent: chunk.map(({ description }) => `* ${description}\n\n)`) })))
       .then((documents) => chain.invoke({ input_documents: documents }));
 
     /*
@@ -66,26 +62,26 @@ export const summarizeDatabaseInfo = async () => {
          activities, requiring shoes that offer support, durability, and
          performance-enhancing features. They may also prefer a sporty aesthetic
          in their footwear.
-
+  
       2. Comfort-Seeking Women: These clients value comfort in their footwear,
          especially for extended periods of wear. They may prefer lightweight
          shoes, shoes with a snug fit, or shoes with extra features like
          breathable mesh and cushioned midsoles.
-
+  
       3. Style-Conscious Women: These clients have a strong sense of personal
          style, whether it's a sleek, modern aesthetic, vintage and heritage
          styles, or feminine touches like pastel colors and floral prints. They
          may also be interested in the latest footwear technology.
-
+  
       4. Men's Footwear: These clients are men who are looking for
          running-inspired shoes or appreciate a mix of retro and modern styles
          in their footwear.
-
+  
       5. General Footwear Enthusiasts: These clients have a broad interest in
          footwear, appreciating features like breathability, durability, and
          comfort. They may be interested in a range of styles, from classic
          low-profile shoes to bold, minimalist designs.
-
+  
       */
 
   } catch (error) {
