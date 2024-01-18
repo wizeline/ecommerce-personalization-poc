@@ -18,9 +18,48 @@ describe("map-products-to-types-of-users", () => {
     })
 
     const Info = sequelize.define("info", {
+      product_id: {
+        type: DataTypes.STRING,
+        primaryKey: true,
+      },
       description: DataTypes.TEXT,
-    }, { tableName: "info" });
+    }, { tableName: "info", timestamps: false });
 
-    expect(await Info.findOne({ where: ['description'] })).toMatchInlineSnapshot(`Array []`);
+    const Category = sequelize.define("categories", {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+      },
+      description: DataTypes.TEXT,
+    }, { tableName: "categories", timestamps: false });
+
+    const InfoCategory = sequelize.define('info_category', {
+      info_id: {
+        type: DataTypes.STRING,
+        references: {
+          model: Info,
+          key: 'product_id'
+        }
+      },
+      category_id: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: Category,
+          key: 'id'
+        }
+      }
+    }, { tableName: 'info_categories', timestamps: false });
+
+    Info.hasMany(Category, { foreignKey: 'id' });
+    Info.belongsToMany(Category, {
+      through: 'info_categories',
+
+      sourceKey: 'product_id',
+      foreignKey: 'product_id',
+      otherKey: 'category_id',
+
+      timestamps: false,
+    });
+    expect(await Info.findAll({ fieldset: ['description'], include: [Category] })).toMatchInlineSnapshot(`Array []`);
   })
 })
