@@ -25,18 +25,21 @@ async function sendAPIPrompt() {
       };
     });
     const template = generatePrompt(promptData);
-    const prompt = new PromptTemplate({
-      template: template.replace(/{/g, "{{").replace(/}/g, "}}"),
-      inputVariables: [],
-    });
+
+    const prompt = PromptTemplate.fromTemplate(template);
 
     const model = new OpenAI({
-      modelName: "gpt-3.5-turbo-1106",
+      modelName: "gpt-3.5-turbo",
       temperature: 0,
     });
     const chain = new LLMChain({ llm: model, prompt });
     const result = await chain.call();
     console.log(result.text);
+
+    // User profile assigned to U014:
+    // Profile 4: Men's Footwear - The user has purchased multiple men's shoes,
+    // including running-inspired shoes and a mix of retro and modern styles.
+    // This profile aligns with the user's preference for men's footwear.
   } catch (error) {
     console.error("Error al enviar la solicitud:", error);
   }
