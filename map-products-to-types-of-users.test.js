@@ -22,6 +22,7 @@ describe("map-products-to-types-of-users", () => {
         type: DataTypes.STRING,
         primaryKey: true,
       },
+      product_name: DataTypes.TEXT,
       description: DataTypes.TEXT,
     }, { tableName: "info", timestamps: false });
 
@@ -33,33 +34,51 @@ describe("map-products-to-types-of-users", () => {
       description: DataTypes.TEXT,
     }, { tableName: "categories", timestamps: false });
 
-    const InfoCategory = sequelize.define('info_category', {
-      info_id: {
-        type: DataTypes.STRING,
-        references: {
-          model: Info,
-          key: 'product_id'
-        }
-      },
-      category_id: {
-        type: DataTypes.INTEGER,
-        references: {
-          model: Category,
-          key: 'id'
-        }
-      }
+    const InfoCategory = sequelize.define('info_categories', {
+      product_id: DataTypes.STRING,
+      category_id: DataTypes.INTEGER,
+      why: DataTypes.TEXT,
     }, { tableName: 'info_categories', timestamps: false });
 
-    Info.hasMany(Category, { foreignKey: 'id' });
+    // InfoCategory.hasOne(Info, { sourceKey: 'product_id', foreignKey: 'product_id' });
+    // InfoCategory.hasOne(Category, { sourceKey: 'category_id', foreignKey: 'id' });
+
+    // Info.hasMany(Category, { foreignKey: 'id' });
     Info.belongsToMany(Category, {
       through: 'info_categories',
-
       sourceKey: 'product_id',
       foreignKey: 'product_id',
       otherKey: 'category_id',
-
-      timestamps: false,
     });
-    expect(await Info.findAll({ fieldset: ['description'], include: [Category] })).toMatchInlineSnapshot(`Array []`);
+    Category.belongsToMany(Info, {
+      through: 'info_categories',
+      sourceKey: 'id',
+      foreignKey: 'category_id',
+      otherKey: 'product_id',
+    });
+
+
+    const { product_id } = await Info.findOne();
+
+    // delete associated categories
+    InfoCategory.destroy({ where: { product_id } });
+
+    // has no categories associated
+    let theProductCategories = await InfoCategory.findAll({ where: { product_id } });
+    expect(theProductCategories.length).toEqual(0);
+
+    // associate two random categories
+    const twoCategories = await Category.findAll({ limit: 2 });
+    InfoCategory.bulkCreate(twoCategories.map(({ id: category_id }) => ({
+      product_id,
+      category_id,
+      why: "just a test",
+    })));
+
+    theProductCategories = await InfoCategory.findAll({ where: { product_id } });
+    expect(theProductCategories.length).toEqual(2);
+
+    const firstCategory = await Category.findOne({ where: { id: twoCategories[0].id }, include: [Info] });
+    expect(firstCategory.infos.length).toEqual(1);
   })
 })
