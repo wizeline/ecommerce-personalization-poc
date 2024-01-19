@@ -1,5 +1,6 @@
 import sqlite3 from "sqlite3";
-sqlite3.verbose();
+
+import { Op } from 'sequelize';
 
 import {
   DB_PATH,
@@ -8,7 +9,11 @@ import {
   USER_QUERY,
 } from "./constants.js";
 
-import { Sequelize, Model, DataTypes } from 'sequelize';
+import {
+  Category,
+  InfoCategory,
+  Info,
+} from "./sequalize-database-models.js"
 
 function readSQLiteData(dbPath, query, callback) {
   const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
@@ -39,22 +44,31 @@ export const readData = (query) =>
     });
   });
 
-
-const sequelize = new Sequelize({
-  dialect: "sqlite",
-  storage: DB_PATH
-});
-
-const Category = sequelize.define("categories", {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-  },
-  description: DataTypes.TEXT,
-}, { tableName: "categories", timestamps: false });
-
-export const readProductInfo = () => readData(PRODUCT_QUERY);
+export const readProductInfo = () => Info.findAll({order: ['product_id'], limit: 150, raw: true});
 export const readUserHistoryPurchaseInfo = () =>
   readData(USER_HISTORY_PURCHASE_QUERY);
 export const readUserInfo = () => readData(USER_QUERY);
-export const readCategories = () => Category.findAll();
+export const readCategories = () => Category.findAll({raw: true});
+export const setProductCategories = async ({product_id}, category_ids, why ) => {
+  await InfoCategory.destroy({ where: { product_id } });
+  await InfoCategory.bulkCreate(category_ids.map((category_id) => ({
+    product_id,
+    category_id,
+    why,
+  })));
+}
+export const readProductsWithoutCategory = async () => readProductInfo()
+.then((infos) => {
+  const product_ids_to_consider = infos.map(({product_id}) => product_id);
+
+  return  InfoCategory.findAll({where: {product_id: {[Op.in]: product_ids_to_consider}}, attributes: ['product_id']})
+    .then((infoCategories) => infoCategories.map(({product_id}) => product_id))
+    .then((existingProductIdWithCategory) => Info.findAll({
+      where: { 
+        product_id: {
+          [Op.in]: product_ids_to_consider, 
+          [Op.notIn]: existingProductIdWithCategory
+        }},
+      raw: true
+    }));
+  });

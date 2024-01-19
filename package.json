@@ -2,6 +2,7 @@
   "type": "module",
   "dependencies": {
     "@langchain/openai": "^0.0.11",
+    "cli-progress": "^3.12.0",
     "dotenv": "^16.3.1",
     "langchain": "^0.1.2",
     "openai": "^4.23.0",
@@ -12,7 +13,8 @@
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
     "start": "node generate-recommendations.js",
-    "summary": "node generate-summarization.main.js"
+    "summary": "node generate-summarization.main.js",
+    "categorizeProducts": "node map-products-to-types-of-users.main.js"
   },
   "devDependencies": {
     "jest": "^29.7.0",

@@ -1,11 +1,15 @@
 import { mapProductsToTypesOfUsers } from "./map-products-to-types-of-users.js";
 
-import { Sequelize, Model, DataTypes } from 'sequelize';
-
+import { Sequelize, Op, DataTypes } from 'sequelize';
+import {
+  Info,
+  InfoCategory
+} from "./sequalize-database-models.js";
+import { readProductsWithoutCategory } from "./read-database-info.js";
 
 describe("map-products-to-types-of-users", () => {
 
-  it.only("runs properly", () => {
+  it("runs properly", () => {
     return mapProductsToTypesOfUsers().then(console.log);
   }, 120000)
 
@@ -80,5 +84,10 @@ describe("map-products-to-types-of-users", () => {
 
     const firstCategory = await Category.findOne({ where: { id: twoCategories[0].id }, include: [Info] });
     expect(firstCategory.infos.length).toEqual(1);
+  })
+
+  it.only("select not categorized productrs", async () => {
+    return readProductsWithoutCategory().then(console.log);
+    // expect(result).toMatchInlineSnapshot("");
   })
 })

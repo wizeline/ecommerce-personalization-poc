@@ -1,8 +1,9 @@
 import { LLMChain, StuffDocumentsChain, MapReduceDocumentsChain } from "langchain/chains";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { ChatOpenAI } from "@langchain/openai";
-import { readCategories, readProductInfo, } from "./read-database-info.js";
+import { readCategories, readProductsWithoutCategory, setProductCategories} from "./read-database-info.js";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
+import cliProgress from "cli-progress";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -25,7 +26,7 @@ export const mapProductsToTypesOfUsers = async () => {
 
     PRODUCT_ID:
     --------------------
-    {id}
+    {product_id}
     --------------------
 
     PRODUCT_DESCRIPTION:
@@ -43,9 +44,8 @@ export const mapProductsToTypesOfUsers = async () => {
       modelName: "gpt-3.5-turbo",
       temperature: 0,
       // fail at the first rate limit error
-      maxRetries: 0,
+      maxRetries: 5,
       // no more than two queries at the same time
-      maxConcurrency: 2,
     })
     .bind({
       functions: [{
@@ -54,7 +54,7 @@ export const mapProductsToTypesOfUsers = async () => {
         parameters: {
           type: "object",
           properties: {
-            recomended_category_ids: {
+            category_ids: {
               type: "array",
               description: "the recommended category ids based on the description of the product",
               items: {
@@ -67,7 +67,7 @@ export const mapProductsToTypesOfUsers = async () => {
               description: "the reasons behing why you recommended this specific categories",
             },
           },
-          required: ["recomended_category_ids", "why"],
+          required: ["category_ids", "why"],
         },
       }],
       function_call: { name: "extractor" },
@@ -79,8 +79,23 @@ export const mapProductsToTypesOfUsers = async () => {
       .pipe(llm)
       .pipe(new JsonOutputFunctionsParser());
 
-    return readProductInfo()
-      .then((productsInfo) => chain.invoke(productsInfo[1]) );
+   const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+
+    return readProductsWithoutCategory()
+      .then(async (infos) => {
+
+        bar.start(infos.length, 0);
+
+        for(const info of infos){
+          await chain.invoke(info)
+          .then(({category_ids, why}) => {
+            return setProductCategories(info, category_ids, why)
+          })
+
+          bar.increment();
+        }
+        bar.stop();
+      });
 
   } catch (error) {
     console.error("Error al ejecutar la cadena:", error);
