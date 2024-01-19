@@ -8,6 +8,8 @@ import {
   USER_QUERY,
 } from "./constants.js";
 
+import { Sequelize, Model, DataTypes } from 'sequelize';
+
 function readSQLiteData(dbPath, query, callback) {
   const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
     if (err) {
@@ -37,7 +39,22 @@ export const readData = (query) =>
     });
   });
 
+
+const sequelize = new Sequelize({
+  dialect: "sqlite",
+  storage: DB_PATH
+});
+
+const Category = sequelize.define("categories", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+  },
+  description: DataTypes.TEXT,
+}, { tableName: "categories", timestamps: false });
+
 export const readProductInfo = () => readData(PRODUCT_QUERY);
 export const readUserHistoryPurchaseInfo = () =>
   readData(USER_HISTORY_PURCHASE_QUERY);
 export const readUserInfo = () => readData(USER_QUERY);
+export const readCategories = () => Category.findAll();
