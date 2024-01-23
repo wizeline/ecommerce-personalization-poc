@@ -9,7 +9,7 @@ describe.only("count tokens of the given string", () => {
 
         const enc = get_encoding("gpt2");
         const PRODUCTS_DESCRIPTION = fs.readFileSync("products_info.txt", 'utf8');
-        const ktokens = Math.round(enc.encode(PRODUCTS_DESCRIPTION).length / 1000);
+        const ktokens = enc.encode(PRODUCTS_DESCRIPTION).length / 1000;
         console.log(`${ktokens} K`)
     })
 })

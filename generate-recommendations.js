@@ -1,4 +1,7 @@
-import OpenAIAPI from "openai";
+import { LLMChain } from "langchain/chains";
+import { OpenAI } from "@langchain/openai";
+import { PromptTemplate } from "@langchain/core/prompts";
+
 import { generatePrompt } from "./generate-prompt.js";
 import {
   readProductInfo,
@@ -6,40 +9,48 @@ import {
   readUserInfo,
 } from "./read-database-info.js";
 import dotenv from "dotenv";
+import { Category, Info, InfoCategory, User } from "./sequalize-database-models.js";
+import { Op } from "sequelize";
 dotenv.config();
 
-const openai = new OpenAIAPI({
-  apiKey: process.env.API_KEY,
-});
-
-async function sendAPIPrompt() {
+async function generateRecommendationsForUser(userId) {
   try {
-    const promptData = await Promise.all([
-      readProductInfo(),
-      readUserHistoryPurchaseInfo(),
-      readUserInfo(),
-    ]).then(([productsInfo, usersHistoryPurchaseInfo, userInfo]) => {
-      return {
-        productsInfo,
-        usersHistoryPurchaseInfo,
-        userInfo,
-      };
-    });
-    const prompt = generatePrompt(promptData);
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-1106",
-      messages: [
+    const user = await User.findOne({ where: { user_id: userId }, include: Category });
+    if (!user) {
+      throw new Error(`User with id '${userId}' not found`)
+    }
+    if (user.categories.length === 0) {
+      throw new Error(`User with id '${userId}' doesn't have an associated category yet`)
+    }
+    const category = user.categories[0];
+    const reason = category.users_categories.why;
+    const recommendations = await Info.findAll({
+      include: [
         {
-          role: "user",
-          content: prompt,
-        },
+          model: Category,
+          where: { id: category.id },
+        }
       ],
-    });
-    console.log(response.choices[0].message.content);
+      where: { description: { [Op.ne]: "None" } }
+    })
+
+    const readableResponse = `
+    The user '${user.name}' was assigned the following category using their purchase history and a list of candidate categories as context:
+
+    "${category.description}"
+
+    The LLM justified this association with the following:
+
+    "${reason}"
+
+    Considering that we used the LLM to also assign a category to the available products, the final list of recommendations for the user is the following:
+
+    ${recommendations.map((product) => `  * ${product.product_id} - ${product.product_name}`).join("\n")}
+    `
+    console.log(readableResponse);
   } catch (error) {
     console.error("Error al enviar la solicitud:", error);
   }
 }
 
-sendAPIPrompt();
+generateRecommendationsForUser("U002");
