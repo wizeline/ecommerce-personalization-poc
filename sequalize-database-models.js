@@ -45,7 +45,7 @@ export const InfoCategory = sequelize.define('info_categories', {
     primaryKey: true,
   },
   category_id: {
-    type: DataTypes.STRING,
+    type: DataTypes.INTEGER,
     primaryKey: true,
   },
   why: DataTypes.TEXT,
@@ -96,5 +96,17 @@ Category.belongsToMany(User, {
 User.belongsToMany(Category, {
   through: "users_categories",
   foreignKey: 'user_id',
+  otherKey: 'category_id',
+})
+
+Category.belongsToMany(Info, {
+  through: "info_categories",
+  foreignKey: 'category_id',
+  otherKey: 'product_id',
+})
+
+Info.belongsToMany(Category, {
+  through: "info_categories",
+  foreignKey: 'product_id',
   otherKey: 'category_id',
 })

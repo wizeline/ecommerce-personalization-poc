@@ -9,40 +9,48 @@ import {
   readUserInfo,
 } from "./read-database-info.js";
 import dotenv from "dotenv";
+import { Category, Info, InfoCategory, User } from "./sequalize-database-models.js";
+import { Op } from "sequelize";
 dotenv.config();
 
-async function sendAPIPrompt() {
+async function generateRecommendationsForUser(userId) {
   try {
-    const promptData = await Promise.all([
-      readProductInfo(),
-      readUserHistoryPurchaseInfo(),
-      readUserInfo(),
-    ]).then(([productsInfo, usersHistoryPurchaseInfo, userInfo]) => {
-      return {
-        productsInfo,
-        usersHistoryPurchaseInfo,
-        userInfo,
-      };
-    });
-    const template = generatePrompt(promptData);
+    const user = await User.findOne({ where: { user_id: userId }, include: Category });
+    if (!user) {
+      throw new Error(`User with id '${userId}' not found`)
+    }
+    if (user.categories.length === 0) {
+      throw new Error(`User with id '${userId}' doesn't have an associated category yet`)
+    }
+    const category = user.categories[0];
+    const reason = category.users_categories.why;
+    const recommendations = await Info.findAll({
+      include: [
+        {
+          model: Category,
+          where: { id: category.id },
+        }
+      ],
+      where: { description: { [Op.ne]: "None" } }
+    })
 
-    const prompt = PromptTemplate.fromTemplate(template);
+    const readableResponse = `
+    The user '${user.name}' was assigned the following category using their purchase history and a list of candidate categories as context:
 
-    const model = new OpenAI({
-      modelName: "gpt-3.5-turbo",
-      temperature: 0,
-    });
-    const chain = new LLMChain({ llm: model, prompt });
-    const result = await chain.call();
-    console.log(result.text);
+    "${category.description}"
 
-    // User profile assigned to U014:
-    // Profile 4: Men's Footwear - The user has purchased multiple men's shoes,
-    // including running-inspired shoes and a mix of retro and modern styles.
-    // This profile aligns with the user's preference for men's footwear.
+    The LLM justified this association with the following:
+
+    "${reason}"
+
+    Considering that we used the LLM to also assign a category to the available products, the final list of recommendations for the user is the following:
+
+    ${recommendations.map((product) => `  * ${product.product_id} - ${product.product_name}`).join("\n")}
+    `
+    console.log(readableResponse);
   } catch (error) {
     console.error("Error al enviar la solicitud:", error);
   }
 }
 
-sendAPIPrompt();
+generateRecommendationsForUser("U002");
