@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`generate prompt correctly create a prompt including product info, history of purchase and id of users 1`] = `
+"este es el JSON de un listado de productos de una tienda
+
+[
+  {
+    "name": "a pair of shoes",
+    "description": "this is a glancy pair of shoes",
+    "id": "P0023"
+  }
+]
+
+Este JSON que aparece a continuación es un objeto donde cada key representa a un usuario de la tienda y como value, tiene un array con cada identificador de la lista de productos anterior que ha comprado
+
+[
+  {
+    "UX0034": [
+      "P0023",
+      "P0024",
+      "P0024"
+    ]
+  }
+]
+
+Para los usuarios con ID UX0034,UX0035,UX0036 generame un JSON con un objeto en la respuesta, donde la key sea el id de usuario y el value un array con tres identificadores de producto que le podríamos recomendar en base a su historial de compras.
+
+Respóndeme exclusivamente el JSON que te pido."
+`;

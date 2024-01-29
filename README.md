@@ -1,25 +1,54 @@
-# Purpose and value
+# Astro Starter Kit: Basics
 
-This project is a simple nodejs app that uses the openapi generated client to call the api and get the recommendations for a given user based on their purchase history. The main purpose of this project is to test how a direct call with text to the OpenAI api works and show the limitations and possibilities.
+```sh
+npm create astro@latest -- --template basics
+```
 
-It showed that given the appropiate prompt the api can give good results, but even with the shorter outcome possible, it is not enough to process big amounts of data. It is also not possible to get the results for all the users in a single call.
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
+[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
 
-# How to run
+> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
 
-Make sure to install dependencies using nodejs 18.19.0 and run the api call document with npm start. You can also run the tests with npm test.
+![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
 
-# Env variables
+## 🚀 Project Structure
 
-You should have defined the following env variables
+Inside of your Astro project, you'll see the following folders and files:
 
-- API_KEY: you openapi key
+```text
+/
+├── public/
+│   └── favicon.svg
+├── src/
+│   ├── components/
+│   │   └── Card.astro
+│   ├── layouts/
+│   │   └── Layout.astro
+│   └── pages/
+│       └── index.astro
+└── package.json
+```
 
-# Prompts used:
+Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
 
-To generate sql tables:
+There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
 
-"Genera un fichero sql para rellenar la tabla de users con 20 usuarios y un historial de compra con varios artículos para cada usuario en la tabla user_purchase_history utilizando productos reales con los product_id de la tabla info con nombres de usuario españoles"
+Any static assets, like images, can be placed in the `public/` directory.
 
-To generate purchase history:
+## 🧞 Commands
 
-dada esta base de datos, genera un fichero sql para rellenar la tabla 'user_purchase_history' con un historial de 100 compras que incluya 'user_id', 'product_id' y 'purchase_date' sabiendo que esas columnas son texto, para usuarios existentes en la table 'users', sabiendo que el id de usuario en la table 'users' es 'user_id' y productos existentes en la tabla 'info' sabiendo que el id de producto es 'product_id'.
+All commands are run from the root of the project, from a terminal:
+
+| Command                   | Action                                           |
+| :------------------------ | :----------------------------------------------- |
+| `npm install`             | Installs dependencies                            |
+| `npm run dev`             | Starts local dev server at `localhost:4321`      |
+| `npm run build`           | Build your production site to `./dist/`          |
+| `npm run preview`         | Preview your build locally, before deploying     |
+| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
+| `npm run astro -- --help` | Get help using the Astro CLI                     |
+
+## 👀 Want to learn more?
+
+Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
