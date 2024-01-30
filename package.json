@@ -13,11 +13,18 @@
     "@astrojs/check": "^0.4.1",
     "@astrojs/netlify": "^5.0.0",
     "@astrojs/react": "^3.0.9",
+    "@langchain/openai": "^0.0.13",
+    "@netlify/functions": "^2.5.1",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
     "astro": "^4.2.6",
+    "dotenv": "^16.4.1",
+    "langchain": "^0.1.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.15.4"
   }
 }
