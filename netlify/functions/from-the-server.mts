@@ -5,11 +5,11 @@ import type { Context } from "@netlify/functions"
 
 export default (req: Request, context: Context): Promise<Response> => {
 
-    const prompt = PromptTemplate.fromTemplate(`Hello there! can you tell me a joke about {thing}?`);
+    const prompt = PromptTemplate.fromTemplate(`Hello there! can you tell me a random unusual joke about {thing}?`);
 
     const llm = new ChatOpenAI({
         modelName: "gpt-3.5-turbo",
-        temperature: 0,
+        temperature: 0.5,
         // fail at the first rate limit error
         maxRetries: 5,
         // no more than two queries at the same time
